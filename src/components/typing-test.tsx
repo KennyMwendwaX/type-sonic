@@ -4,12 +4,27 @@ import type React from "react";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Clock, RotateCcw, Volume2, VolumeX } from "lucide-react";
+import {
+  Clock,
+  RotateCcw,
+  Volume2,
+  VolumeX,
+  Keyboard,
+  RefreshCw,
+  Trophy,
+} from "lucide-react";
 import TestStats from "@/components/test-stats";
 import { useAudio } from "@/hooks/use-audio";
+// import { motion } from "motion/react";
 
 // Sample text for typing test
 const sampleTexts = [
@@ -18,6 +33,16 @@ const sampleTexts = [
   "The best way to predict the future is to invent it. Computer science is no more about computers than astronomy is about telescopes.",
   "Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.",
 ];
+
+// Additional texts for variety
+const additionalTexts = [
+  "The five boxing wizards jump quickly. How razorback-jumping frogs can level six piqued gymnasts!",
+  "Technology is best when it brings people together. The advance of technology is based on making it fit in so that you don't really even notice it.",
+  "Good code is its own best documentation. As you're about to add a comment, ask yourself, 'How can I improve the code so that this comment isn't needed?'",
+];
+
+// Combine all texts
+const allTexts = [...sampleTexts, ...additionalTexts];
 
 // Test durations in seconds
 const TEST_DURATIONS = [15, 30, 60, 120];
@@ -35,13 +60,22 @@ export default function TypingTest() {
   const [testComplete, setTestComplete] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [wordsTyped, setWordsTyped] = useState(0);
+  const [personalBest, setPersonalBest] = useState<number | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { playCorrectSound, playErrorSound } = useAudio();
 
   // Initialize with a random text
   useEffect(() => {
-    setText(sampleTexts[Math.floor(Math.random() * sampleTexts.length)]);
+    setText(allTexts[Math.floor(Math.random() * allTexts.length)]);
+
+    // Load personal best from localStorage if available
+    const savedBest = localStorage.getItem("typeSonic_personalBest");
+    if (savedBest) {
+      setPersonalBest(parseInt(savedBest));
+    }
   }, []);
 
   // Timer logic
@@ -95,7 +129,8 @@ export default function TypingTest() {
     setTimeLeft(duration);
     setTestActive(true);
     setTestComplete(false);
-    setText(sampleTexts[Math.floor(Math.random() * sampleTexts.length)]);
+    setText(allTexts[Math.floor(Math.random() * allTexts.length)]);
+    setShowConfetti(false);
 
     // Focus the input field
     if (inputRef.current) {
@@ -108,6 +143,16 @@ export default function TypingTest() {
     setEndTime(Date.now());
     setTestActive(false);
     setTestComplete(true);
+
+    const finalWPM = calculateWPM();
+
+    // Check for personal best
+    if (personalBest === null || finalWPM > personalBest) {
+      setPersonalBest(finalWPM);
+      localStorage.setItem("typeSonic_personalBest", finalWPM.toString());
+      setStreak(streak + 1);
+      setShowConfetti(true);
+    }
   };
 
   // Handle user input
@@ -154,6 +199,13 @@ export default function TypingTest() {
     setSoundEnabled(!soundEnabled);
   };
 
+  // Get a new text
+  const getNewText = () => {
+    if (!testActive) {
+      setText(allTexts[Math.floor(Math.random() * allTexts.length)]);
+    }
+  };
+
   // Render the text with highlighting for typed characters
   const renderText = () => {
     return text.split("").map((char, index) => {
@@ -183,16 +235,60 @@ export default function TypingTest() {
     });
   };
 
+  // Calculate time fraction for progress
+  const timeFraction = timeLeft / duration;
+
   return (
     <div className="space-y-6">
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-muted-foreground" />
-              <span className="font-mono text-xl">{timeLeft}s</span>
+      <Card className="border-2 shadow-lg">
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <Keyboard className="h-6 w-6 text-primary" />
+                TypeSonic
+              </CardTitle>
+              <CardDescription>
+                Challenge your typing speed and accuracy
+              </CardDescription>
+            </div>
+
+            {personalBest && (
+              <div className="flex items-center gap-2 bg-amber-100 dark:bg-amber-900/30 p-2 rounded-md">
+                <Trophy className="h-5 w-5 text-amber-500" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Personal Best</p>
+                  <p className="font-bold text-amber-600 dark:text-amber-400">
+                    {personalBest} WPM
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-6 pt-2">
+          <div className="mb-6 relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className="absolute top-0 left-0 h-full bg-primary transition-all duration-1000 ease-linear"
+              style={{ width: `${timeFraction * 100}%` }}
+            />
+          </div>
+
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
+              <Clock className="h-5 w-5 text-primary" />
+              <span className="font-mono text-xl font-bold">{timeLeft}s</span>
             </div>
             <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={getNewText}
+                disabled={testActive}
+                title="New text">
+                <RefreshCw className="h-4 w-4" />
+              </Button>
               <Button
                 variant="outline"
                 size="icon"
@@ -215,23 +311,26 @@ export default function TypingTest() {
             </div>
           </div>
 
-          <TestStats
-            wpm={calculateWPM()}
-            accuracy={calculateAccuracy()}
-            errors={errors}
-            wordsTyped={wordsTyped}
-          />
+          <div className="mb-6">
+            <TestStats
+              wpm={calculateWPM()}
+              accuracy={calculateAccuracy()}
+              errors={errors}
+              wordsTyped={wordsTyped}
+            />
+          </div>
 
-          <div className="mt-6">
+          <div className="mb-6">
             <Tabs
               defaultValue={duration.toString()}
               onValueChange={(value) => changeDuration(Number.parseInt(value))}>
-              <TabsList className="grid grid-cols-4 mb-4">
+              <TabsList className="grid grid-cols-4 w-full">
                 {TEST_DURATIONS.map((seconds) => (
                   <TabsTrigger
                     key={seconds}
                     value={seconds.toString()}
-                    disabled={testActive}>
+                    disabled={testActive}
+                    className="text-sm">
                     {seconds}s
                   </TabsTrigger>
                 ))}
@@ -239,7 +338,7 @@ export default function TypingTest() {
             </Tabs>
           </div>
 
-          <div className="mt-6 p-4 bg-muted/50 rounded-md font-mono text-lg leading-relaxed tracking-wide">
+          <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg font-mono text-lg leading-relaxed tracking-wide border border-gray-200 dark:border-gray-700 shadow-inner">
             {renderText()}
           </div>
 
@@ -250,7 +349,7 @@ export default function TypingTest() {
               value={userInput}
               onChange={handleInputChange}
               disabled={!testActive || testComplete}
-              className="w-full p-3 border rounded-md font-mono focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full p-4 border-2 rounded-lg font-mono text-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
               placeholder={
                 testActive
                   ? "Start typing..."
@@ -268,31 +367,42 @@ export default function TypingTest() {
               size="lg"
               onClick={startTest}
               disabled={testActive}
-              className="px-8">
+              className="px-10 py-6 text-lg font-medium transition-all hover:scale-105 bg-gradient-to-r from-primary to-primary/80">
               {testComplete ? "Try Again" : "Start Test"}
             </Button>
           </div>
 
           {testComplete && (
-            <div className="mt-6 p-4 bg-primary/10 rounded-md">
-              <h3 className="text-lg font-bold mb-2">Test Results</h3>
+            <div className="mt-6 p-6 bg-primary/10 rounded-lg border border-primary/20">
+              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-primary" />
+                Test Results
+              </h3>
               <div className="flex flex-wrap gap-4">
-                <Badge variant="outline" className="text-sm py-1 px-3">
+                <Badge variant="outline" className="text-md py-2 px-4 border-2">
                   WPM: {calculateWPM()}
                 </Badge>
-                <Badge variant="outline" className="text-sm py-1 px-3">
+                <Badge variant="outline" className="text-md py-2 px-4 border-2">
                   Words: {wordsTyped}
                 </Badge>
-                <Badge variant="outline" className="text-sm py-1 px-3">
+                <Badge variant="outline" className="text-md py-2 px-4 border-2">
                   Accuracy: {calculateAccuracy()}%
                 </Badge>
-                <Badge variant="outline" className="text-sm py-1 px-3">
+                <Badge variant="outline" className="text-md py-2 px-4 border-2">
                   Errors: {errors}
                 </Badge>
-                <Badge variant="outline" className="text-sm py-1 px-3">
+                <Badge variant="outline" className="text-md py-2 px-4 border-2">
                   Time: {duration - timeLeft}s
                 </Badge>
               </div>
+
+              {showConfetti && (
+                <div className="mt-4 p-3 bg-amber-100 dark:bg-amber-900/30 rounded-md border border-amber-200 dark:border-amber-800">
+                  <p className="text-center text-amber-800 dark:text-amber-300 font-medium">
+                    🎉 New Personal Best! {calculateWPM()} WPM 🎉
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
