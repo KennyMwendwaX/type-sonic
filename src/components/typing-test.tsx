@@ -1,8 +1,6 @@
 "use client";
 
-import type React from "react";
-
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,403 +8,543 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter,
 } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet";
 import {
   Clock,
   RotateCcw,
   Volume2,
   VolumeX,
-  Keyboard,
-  RefreshCw,
-  Trophy,
+  Settings,
+  History,
+  X,
+  Award,
+  Trash2,
 } from "lucide-react";
 import TestStats from "@/components/test-stats";
 import { useAudio } from "@/hooks/use-audio";
-// import { motion } from "motion/react";
-
-// Sample text for typing test
-const sampleTexts = [
-  "The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs. How vexingly quick daft zebras jump!",
-  "Programming is the process of creating a set of instructions that tell a computer how to perform a task. Programming can be done using a variety of computer programming languages.",
-  "The best way to predict the future is to invent it. Computer science is no more about computers than astronomy is about telescopes.",
-  "Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.",
-];
-
-// Additional texts for variety
-const additionalTexts = [
-  "The five boxing wizards jump quickly. How razorback-jumping frogs can level six piqued gymnasts!",
-  "Technology is best when it brings people together. The advance of technology is based on making it fit in so that you don't really even notice it.",
-  "Good code is its own best documentation. As you're about to add a comment, ask yourself, 'How can I improve the code so that this comment isn't needed?'",
-];
-
-// Combine all texts
-const allTexts = [...sampleTexts, ...additionalTexts];
-
-// Test durations in seconds
-const TEST_DURATIONS = [15, 30, 60, 120];
+import { useTypingTest } from "@/hooks/use-typing-test";
+import { renderText } from "@/components/render-text";
+import { TEST_DURATIONS, THEMES } from "@/lib/constants";
+import { getWPMGrade } from "@/lib/get-wpm-grade";
+import { TextDifficulty, ThemeOption, KeyboardLayout } from "@/lib/types";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { format } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import Confetti from "react-confetti";
 
 export default function TypingTest() {
-  const [text, setText] = useState("");
-  const [userInput, setUserInput] = useState("");
-  const [startTime, setStartTime] = useState<number | null>(null);
-  const [endTime, setEndTime] = useState<number | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [errors, setErrors] = useState(0);
-  const [duration, setDuration] = useState(30); // Default 30 seconds
-  const [timeLeft, setTimeLeft] = useState(duration);
-  const [testActive, setTestActive] = useState(false);
-  const [testComplete, setTestComplete] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [wordsTyped, setWordsTyped] = useState(0);
-  const [personalBest, setPersonalBest] = useState<number | null>(null);
-  const [streak, setStreak] = useState(0);
-  const [showConfetti, setShowConfetti] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const {
+    text,
+    userInput,
+    currentIndex,
+    errors,
+    duration,
+    timeLeft,
+    testActive,
+    testComplete,
+    soundEnabled,
+    wordsTyped,
+    personalBest,
+    streak,
+    showConfetti,
+    difficulty,
+    theme,
+    showHistory,
+    showSettings,
+    history,
+    focusMode,
+    keyboardLayout,
+    instantFeedback,
+    isNewRecord,
+    calculateWPM,
+    calculateAccuracy,
+    startTest,
+    endTest,
+    handleInputChange,
+    changeDuration,
+    toggleSound,
+    changeDifficulty,
+    deleteHistoryItem,
+    clearHistory,
+    resetPersonalBest,
+    setTheme,
+    setShowConfetti,
+    setShowHistory,
+    setShowSettings,
+    setSoundEnabled,
+    setFocusMode,
+    setInstantFeedback,
+    setKeyboardLayout,
+  } = useTypingTest();
 
+  const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { playCorrectSound, playErrorSound } = useAudio();
 
-  // Initialize with a random text
+  // Focus input when test starts
   useEffect(() => {
-    setText(allTexts[Math.floor(Math.random() * allTexts.length)]);
-
-    // Load personal best from localStorage if available
-    const savedBest = localStorage.getItem("typeSonic_personalBest");
-    if (savedBest) {
-      setPersonalBest(parseInt(savedBest));
+    if (testActive && inputRef.current) {
+      inputRef.current.focus();
     }
-  }, []);
+  }, [testActive]);
 
-  // Timer logic
+  // Play sounds on keypress if enabled
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (!testActive || !soundEnabled) return;
 
-    if (testActive && timeLeft > 0) {
-      interval = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval as NodeJS.Timeout);
-            endTest();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      const currentChar = text[currentIndex];
+      if (e.key === currentChar) {
+        playCorrectSound();
+      } else if (e.key !== "Shift" && e.key !== "Control" && e.key !== "Alt") {
+        playErrorSound();
+      }
+    };
+
+    if (soundEnabled && testActive) {
+      window.addEventListener("keydown", handleKeyPress);
     }
 
     return () => {
-      if (interval) clearInterval(interval);
+      window.removeEventListener("keydown", handleKeyPress);
     };
-  }, [testActive, timeLeft]);
-
-  // Calculate stats
-  const calculateWPM = useCallback(() => {
-    if (!startTime) return 0;
-
-    const currentTime = testComplete ? endTime : Date.now();
-    if (!currentTime) return 0;
-
-    const timeElapsed = (currentTime - startTime) / 1000 / 60; // in minutes
-    if (timeElapsed === 0) return 0;
-
-    return Math.round(wordsTyped / timeElapsed) || 0;
-  }, [startTime, endTime, wordsTyped, testComplete]);
-
-  const calculateAccuracy = useCallback(() => {
-    if (userInput.length === 0) return 100;
-    return Math.round(((userInput.length - errors) / userInput.length) * 100);
-  }, [userInput.length, errors]);
-
-  // Start the test
-  const startTest = () => {
-    setUserInput("");
-    setCurrentIndex(0);
-    setErrors(0);
-    setWordsTyped(0);
-    setStartTime(Date.now());
-    setEndTime(null);
-    setTimeLeft(duration);
-    setTestActive(true);
-    setTestComplete(false);
-    setText(allTexts[Math.floor(Math.random() * allTexts.length)]);
-    setShowConfetti(false);
-
-    // Focus the input field
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  };
-
-  // End the test
-  const endTest = () => {
-    setEndTime(Date.now());
-    setTestActive(false);
-    setTestComplete(true);
-
-    const finalWPM = calculateWPM();
-
-    // Check for personal best
-    if (personalBest === null || finalWPM > personalBest) {
-      setPersonalBest(finalWPM);
-      localStorage.setItem("typeSonic_personalBest", finalWPM.toString());
-      setStreak(streak + 1);
-      setShowConfetti(true);
-    }
-  };
-
-  // Handle user input
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!testActive || testComplete) return;
-
-    const value = e.target.value;
-    const lastChar = value[value.length - 1];
-
-    // Check if the typed character is correct
-    if (value.length > 0 && text[value.length - 1] === lastChar) {
-      if (soundEnabled) playCorrectSound();
-    } else {
-      if (soundEnabled) playErrorSound();
-      setErrors((prev) => prev + 1);
-    }
-
-    setUserInput(value);
-    setCurrentIndex(value.length);
-
-    // Update words typed
-    const words = value.trim().split(/\s+/);
-    setWordsTyped(words.length);
-
-    // If user completes all words before time runs out
-    const totalWords = text.trim().split(/\s+/).length;
-    if (words.length >= totalWords) {
-      endTest();
-    }
-  };
-
-  // Change test duration
-  const changeDuration = (newDuration: number) => {
-    setDuration(newDuration);
-    setTimeLeft(newDuration);
-    if (testActive) {
-      endTest();
-      setTestActive(false);
-    }
-  };
-
-  // Toggle sound
-  const toggleSound = () => {
-    setSoundEnabled(!soundEnabled);
-  };
-
-  // Get a new text
-  const getNewText = () => {
-    if (!testActive) {
-      setText(allTexts[Math.floor(Math.random() * allTexts.length)]);
-    }
-  };
-
-  // Render the text with highlighting for typed characters
-  const renderText = () => {
-    return text.split("").map((char, index) => {
-      let className = "text-gray-400"; // Untyped text
-
-      if (index < userInput.length) {
-        // Correct character
-        if (char === userInput[index]) {
-          className = "text-primary font-medium";
-        }
-        // Incorrect character
-        else {
-          className = "text-red-500 font-medium bg-red-100 dark:bg-red-900/30";
-        }
-      }
-
-      // Current position
-      if (index === currentIndex) {
-        className += " border-b-2 border-primary animate-pulse";
-      }
-
-      return (
-        <span key={index} className={className}>
-          {char}
-        </span>
-      );
-    });
-  };
+  }, [
+    testActive,
+    soundEnabled,
+    text,
+    currentIndex,
+    playCorrectSound,
+    playErrorSound,
+  ]);
 
   // Calculate time fraction for progress
   const timeFraction = timeLeft / duration;
 
+  // Card classes based on selected theme
+  const cardClasses = `border-2 shadow-lg transition-all duration-300 ${
+    THEMES[theme as ThemeOption]
+  }`;
+
   return (
-    <div className="space-y-6">
-      <Card className="border-2 shadow-lg">
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-center">
+    <div className="space-y-6" ref={containerRef}>
+      {showConfetti && (
+        <Confetti
+          width={typeof window !== "undefined" ? window.innerWidth : 500}
+          height={typeof window !== "undefined" ? window.innerHeight : 500}
+          recycle={false}
+          numberOfPieces={200}
+          gravity={0.15}
+          onConfettiComplete={() => {
+            setTimeout(() => {
+              setShowConfetti(false);
+            }, 3000);
+          }}
+        />
+      )}
+
+      <TooltipProvider>
+        <Card className={cardClasses}>
+          <CardHeader
+            className={`pb-2 flex flex-row items-center justify-between ${
+              focusMode && testActive ? "sr-only" : ""
+            }`}>
             <div>
-              <CardTitle className="text-2xl flex items-center gap-2">
-                <Keyboard className="h-6 w-6 text-primary" />
-                TypeSonic
-              </CardTitle>
+              <CardTitle>Speed Typing Test</CardTitle>
               <CardDescription>
-                Challenge your typing speed and accuracy
+                Test your typing speed and accuracy
               </CardDescription>
             </div>
 
-            {personalBest && (
-              <div className="flex items-center gap-2 bg-amber-100 dark:bg-amber-900/30 p-2 rounded-md">
-                <Trophy className="h-5 w-5 text-amber-500" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Personal Best</p>
-                  <p className="font-bold text-amber-600 dark:text-amber-400">
-                    {personalBest} WPM
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </CardHeader>
-
-        <CardContent className="p-6 pt-2">
-          <div className="mb-6 relative h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div
-              className="absolute top-0 left-0 h-full bg-primary transition-all duration-1000 ease-linear"
-              style={{ width: `${timeFraction * 100}%` }}
-            />
-          </div>
-
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full">
-              <Clock className="h-5 w-5 text-primary" />
-              <span className="font-mono text-xl font-bold">{timeLeft}s</span>
-            </div>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={getNewText}
-                disabled={testActive}
-                title="New text">
-                <RefreshCw className="h-4 w-4" />
-              </Button>
+              <Sheet open={showSettings} onOpenChange={setShowSettings}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>Settings</SheetTitle>
+                    <SheetDescription>
+                      Customize your typing test experience
+                    </SheetDescription>
+                  </SheetHeader>
+                  <div className="py-4 space-y-6">
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-medium">Appearance</h3>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(Object.keys(THEMES) as ThemeOption[]).map(
+                          (themeOption) => (
+                            <Button
+                              key={themeOption}
+                              variant={
+                                theme === themeOption ? "default" : "outline"
+                              }
+                              className="justify-start"
+                              onClick={() => setTheme(themeOption)}>
+                              {themeOption.charAt(0).toUpperCase() +
+                                themeOption.slice(1)}
+                            </Button>
+                          )
+                        )}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-medium">Test Options</h3>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="sound">Sound Effects</Label>
+                        <Switch
+                          id="sound"
+                          checked={soundEnabled}
+                          onCheckedChange={setSoundEnabled}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="focus">Focus Mode</Label>
+                        <Switch
+                          id="focus"
+                          checked={focusMode}
+                          onCheckedChange={setFocusMode}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="feedback">Instant Feedback</Label>
+                        <Switch
+                          id="feedback"
+                          checked={instantFeedback}
+                          onCheckedChange={setInstantFeedback}
+                        />
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-medium">Keyboard Layout</h3>
+                      <Select
+                        value={keyboardLayout}
+                        onValueChange={(value) =>
+                          setKeyboardLayout(value as KeyboardLayout)
+                        }>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select layout" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="standard">QWERTY</SelectItem>
+                          <SelectItem value="dvorak">Dvorak</SelectItem>
+                          <SelectItem value="colemak">Colemak</SelectItem>
+                          <SelectItem value="workman">Workman</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-medium">Reset Data</h3>
+                      <div className="flex flex-col gap-2">
+                        <Button
+                          variant="destructive"
+                          onClick={resetPersonalBest}
+                          className="justify-start">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Reset Personal Best
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={clearHistory}
+                          className="justify-start">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Clear History
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  <SheetClose asChild>
+                    <Button className="mt-4">Close Settings</Button>
+                  </SheetClose>
+                </SheetContent>
+              </Sheet>
+
+              <Sheet open={showHistory} onOpenChange={setShowHistory}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <History className="h-4 w-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent>
+                  <SheetHeader>
+                    <SheetTitle>Test History</SheetTitle>
+                    <SheetDescription>
+                      View your previous typing test results
+                    </SheetDescription>
+                  </SheetHeader>
+
+                  {history.length > 0 ? (
+                    <ScrollArea className="h-[70vh] pr-4 my-4">
+                      <div className="space-y-4">
+                        {history.map((entry) => (
+                          <Card key={entry.id} className="relative">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="absolute top-2 right-2 h-6 w-6"
+                              onClick={() => deleteHistoryItem(entry.id)}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                            <CardContent className="pt-6">
+                              <div className="grid grid-cols-2 gap-y-4">
+                                <div>
+                                  <p className="text-sm text-muted-foreground">
+                                    Date
+                                  </p>
+                                  <p className="font-medium">
+                                    {format(
+                                      new Date(entry.date),
+                                      "MMM d, yyyy"
+                                    )}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-muted-foreground">
+                                    Time
+                                  </p>
+                                  <p className="font-medium">
+                                    {format(new Date(entry.date), "h:mm a")}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-muted-foreground">
+                                    WPM
+                                  </p>
+                                  <p className="font-medium text-lg">
+                                    {entry.wpm}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-muted-foreground">
+                                    Level
+                                  </p>
+                                  <p className="font-medium">
+                                    {getWPMGrade(entry.wpm)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-muted-foreground">
+                                    Accuracy
+                                  </p>
+                                  <p className="font-medium">
+                                    {entry.accuracy}%
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-muted-foreground">
+                                    Duration
+                                  </p>
+                                  <p className="font-medium">
+                                    {entry.duration}s
+                                  </p>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-40">
+                      <History className="h-10 w-10 text-muted-foreground mb-2" />
+                      <p className="text-muted-foreground">No history yet</p>
+                      <p className="text-sm text-muted-foreground">
+                        Complete your first test to see results here
+                      </p>
+                    </div>
+                  )}
+                </SheetContent>
+              </Sheet>
+
               <Button
                 variant="outline"
                 size="icon"
                 onClick={toggleSound}
-                title={soundEnabled ? "Disable sound" : "Enable sound"}>
+                aria-label={soundEnabled ? "Disable sound" : "Enable sound"}>
                 {soundEnabled ? (
                   <Volume2 className="h-4 w-4" />
                 ) : (
                   <VolumeX className="h-4 w-4" />
                 )}
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={startTest}
-                disabled={testActive}
-                title="Reset test">
-                <RotateCcw className="h-4 w-4" />
-              </Button>
             </div>
-          </div>
+          </CardHeader>
 
-          <div className="mb-6">
-            <TestStats
-              wpm={calculateWPM()}
-              accuracy={calculateAccuracy()}
-              errors={errors}
-              wordsTyped={wordsTyped}
-            />
-          </div>
+          <CardContent className="space-y-4">
+            {/* Duration selector */}
+            <div className={`${focusMode && testActive ? "sr-only" : ""}`}>
+              <Tabs
+                defaultValue={duration.toString()}
+                onValueChange={(value) => changeDuration(parseInt(value))}
+                className="w-full">
+                <TabsList className="w-full">
+                  {TEST_DURATIONS.map((seconds) => (
+                    <TabsTrigger
+                      key={seconds}
+                      value={seconds.toString()}
+                      disabled={testActive}
+                      className="flex-1">
+                      <Clock className="h-4 w-4 mr-2" />
+                      {seconds}s
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
 
-          <div className="mb-6">
-            <Tabs
-              defaultValue={duration.toString()}
-              onValueChange={(value) => changeDuration(Number.parseInt(value))}>
-              <TabsList className="grid grid-cols-4 w-full">
-                {TEST_DURATIONS.map((seconds) => (
-                  <TabsTrigger
-                    key={seconds}
-                    value={seconds.toString()}
-                    disabled={testActive}
-                    className="text-sm">
-                    {seconds}s
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
+            {/* Difficulty selector */}
+            <div className={`${focusMode && testActive ? "sr-only" : ""}`}>
+              <Select
+                value={difficulty}
+                onValueChange={(value) =>
+                  changeDifficulty(value as TextDifficulty)
+                }
+                disabled={testActive}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select difficulty" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="easy">Easy</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="hard">Hard</SelectItem>
+                  <SelectItem value="code">Code</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-lg font-mono text-lg leading-relaxed tracking-wide border border-gray-200 dark:border-gray-700 shadow-inner">
-            {renderText()}
-          </div>
+            {/* Timer progress */}
+            {testActive && (
+              <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary transition-all duration-1000"
+                  style={{ width: `${timeFraction * 100}%` }}
+                />
+              </div>
+            )}
 
-          <div className="mt-6">
+            {/* Text display area */}
+            <div
+              className={`p-4 rounded-md bg-gray-50 dark:bg-gray-900 min-h-[150px] font-mono text-lg leading-relaxed relative ${
+                !testActive && !testComplete ? "cursor-pointer" : ""
+              }`}
+              onClick={() => {
+                if (!testActive && !testComplete && inputRef.current) {
+                  inputRef.current.focus();
+                }
+              }}>
+              {/* Text rendering */}
+              <div className="overflow-auto max-h-[400px]">
+                {renderText(text, userInput, currentIndex)}
+              </div>
+
+              {/* Overlay for inactive state */}
+              {!testActive && !testComplete && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/5 dark:bg-white/5 backdrop-blur-sm rounded-md">
+                  <Button onClick={startTest} className="text-lg px-8 py-6">
+                    Start Typing Test
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Hidden input field for capturing typing */}
             <input
               ref={inputRef}
               type="text"
               value={userInput}
               onChange={handleInputChange}
-              disabled={!testActive || testComplete}
-              className="w-full p-4 border-2 rounded-lg font-mono text-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-              placeholder={
-                testActive
-                  ? "Start typing..."
-                  : "Press the button below to start the test"
-              }
+              className="sr-only"
               autoComplete="off"
               autoCapitalize="off"
               autoCorrect="off"
               spellCheck="false"
+              aria-label="Typing input"
+              disabled={!testActive || testComplete}
             />
-          </div>
 
-          <div className="mt-6 flex justify-center">
-            <Button
-              size="lg"
-              onClick={startTest}
-              disabled={testActive}
-              className="px-10 py-6 text-lg font-medium transition-all hover:scale-105 bg-gradient-to-r from-primary to-primary/80">
-              {testComplete ? "Try Again" : "Start Test"}
-            </Button>
-          </div>
-
-          {testComplete && (
-            <div className="mt-6 p-6 bg-primary/10 rounded-lg border border-primary/20">
-              <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-primary" />
-                Test Results
-              </h3>
-              <div className="flex flex-wrap gap-4">
-                <Badge variant="outline" className="text-md py-2 px-4 border-2">
-                  WPM: {calculateWPM()}
-                </Badge>
-                <Badge variant="outline" className="text-md py-2 px-4 border-2">
-                  Words: {wordsTyped}
-                </Badge>
-                <Badge variant="outline" className="text-md py-2 px-4 border-2">
-                  Accuracy: {calculateAccuracy()}%
-                </Badge>
-                <Badge variant="outline" className="text-md py-2 px-4 border-2">
-                  Errors: {errors}
-                </Badge>
-                <Badge variant="outline" className="text-md py-2 px-4 border-2">
-                  Time: {duration - timeLeft}s
-                </Badge>
-              </div>
-
-              {showConfetti && (
-                <div className="mt-4 p-3 bg-amber-100 dark:bg-amber-900/30 rounded-md border border-amber-200 dark:border-amber-800">
-                  <p className="text-center text-amber-800 dark:text-amber-300 font-medium">
-                    🎉 New Personal Best! {calculateWPM()} WPM 🎉
-                  </p>
+            {/* Results display */}
+            {testComplete && (
+              <div className="space-y-4 mt-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold">Results</h3>
+                  {isNewRecord && (
+                    <div className="flex items-center bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400 px-3 py-1 rounded-full text-sm font-medium">
+                      <Award className="h-4 w-4 mr-1" />
+                      New Record!
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+
+                <TestStats
+                  wpm={calculateWPM()}
+                  accuracy={calculateAccuracy()}
+                  errors={errors}
+                  wordsTyped={wordsTyped}
+                  duration={duration}
+                  personalBest={personalBest}
+                  isNewRecord={isNewRecord}
+                />
+              </div>
+            )}
+          </CardContent>
+
+          <CardFooter className="flex justify-between">
+            {testComplete ? (
+              <Button onClick={startTest} className="flex items-center">
+                <RotateCcw className="h-4 w-4 mr-2" />
+                Restart Test
+              </Button>
+            ) : testActive ? (
+              <Button variant="destructive" onClick={endTest}>
+                End Test
+              </Button>
+            ) : (
+              <div></div>
+            )}
+
+            {streak > 0 && (
+              <div className="text-sm flex items-center text-orange-600 dark:text-orange-400">
+                <Award className="h-4 w-4 mr-1" />
+                Streak: {streak}
+              </div>
+            )}
+          </CardFooter>
+        </Card>
+      </TooltipProvider>
     </div>
   );
 }

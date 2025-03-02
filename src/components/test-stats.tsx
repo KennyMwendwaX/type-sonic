@@ -1,11 +1,23 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Keyboard, Percent, AlertCircle, FileText } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import {
+  Keyboard,
+  Percent,
+  AlertCircle,
+  FileText,
+  Clock,
+  TrendingUp,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface TestStatsProps {
   wpm: number;
   accuracy: number;
   errors: number;
   wordsTyped: number;
+  duration?: number;
+  personalBest?: number | null;
+  isNewRecord?: boolean;
 }
 
 export default function TestStats({
@@ -13,48 +25,87 @@ export default function TestStats({
   accuracy,
   errors,
   wordsTyped,
+  duration = 30,
+  personalBest = null,
+  isNewRecord = false,
 }: TestStatsProps) {
+  const statsItems = [
+    { label: "WPM", value: wpm, icon: Keyboard, color: "text-blue-500" },
+    {
+      label: "Accuracy",
+      value: `${accuracy}%`,
+      icon: Percent,
+      color: "text-green-500",
+    },
+    {
+      label: "Errors",
+      value: errors,
+      icon: AlertCircle,
+      color: "text-red-500",
+    },
+    {
+      label: "Words",
+      value: wordsTyped,
+      icon: FileText,
+      color: "text-purple-500",
+    },
+    {
+      label: "Time",
+      value: `${duration}s`,
+      icon: Clock,
+      color: "text-yellow-500",
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-md">
-        <CardContent className="p-4 flex flex-col items-center justify-center">
-          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
-            <Keyboard className="h-6 w-6 text-primary" />
+    <div className="space-y-4">
+      <Card className="overflow-hidden">
+        <CardContent className="p-0">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 divide-x divide-y">
+            {statsItems.map((item) => (
+              <div
+                key={item.label}
+                className="p-4 flex flex-col items-center justify-center">
+                <item.icon className={cn("w-6 h-6 mb-2", item.color)} />
+                <p className="text-sm font-medium text-muted-foreground">
+                  {item.label}
+                </p>
+                <p className="text-2xl font-bold">{item.value}</p>
+              </div>
+            ))}
           </div>
-          <p className="text-sm text-muted-foreground">WPM</p>
-          <p className="text-3xl font-bold">{wpm}</p>
         </CardContent>
       </Card>
 
-      <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-md">
-        <CardContent className="p-4 flex flex-col items-center justify-center">
-          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
-            <Percent className="h-6 w-6 text-primary" />
-          </div>
-          <p className="text-sm text-muted-foreground">Accuracy</p>
-          <p className="text-3xl font-bold">{accuracy}%</p>
-        </CardContent>
-      </Card>
-
-      <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-md">
-        <CardContent className="p-4 flex flex-col items-center justify-center">
-          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
-            <AlertCircle className="h-6 w-6 text-primary" />
-          </div>
-          <p className="text-sm text-muted-foreground">Errors</p>
-          <p className="text-3xl font-bold">{errors}</p>
-        </CardContent>
-      </Card>
-
-      <Card className="border-2 hover:border-primary/50 transition-all hover:shadow-md">
-        <CardContent className="p-4 flex flex-col items-center justify-center">
-          <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
-            <FileText className="h-6 w-6 text-primary" />
-          </div>
-          <p className="text-sm text-muted-foreground">Words</p>
-          <p className="text-3xl font-bold">{wordsTyped}</p>
-        </CardContent>
-      </Card>
+      {personalBest !== null && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-muted-foreground">
+                Personal Best
+              </p>
+              <div className="flex items-center">
+                <TrendingUp className="w-4 h-4 mr-1 text-green-500" />
+                <p className="text-sm font-medium text-green-500">
+                  {isNewRecord
+                    ? "New Record!"
+                    : personalBest
+                    ? `${Math.max(0, wpm - personalBest)} WPM Improvement`
+                    : "First attempt"}
+                </p>
+              </div>
+            </div>
+            <Progress
+              value={(wpm / (personalBest || wpm)) * 100}
+              className="h-2"
+            />
+            <div className="flex justify-between mt-2 text-sm">
+              <span>{personalBest || 0} WPM</span>
+              <span className="font-medium">{wpm} WPM</span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
