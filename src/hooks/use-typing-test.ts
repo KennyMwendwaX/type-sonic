@@ -88,7 +88,7 @@ export function useTypingTest() {
   }, [startTime, endTime, wordsTyped, testComplete]);
 
   const calculateAccuracy = useCallback((): number => {
-    if (userInput.length === 0) return 100;
+    if (userInput.length === 0) return 0;
     return Math.round(((userInput.length - errors) / userInput.length) * 100);
   }, [userInput.length, errors]);
 

@@ -19,39 +19,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-  SheetClose,
-} from "@/components/ui/sheet";
-import {
-  Clock,
-  RotateCcw,
-  Volume2,
-  VolumeX,
-  Settings,
-  History,
-  X,
-  Award,
-  Trash2,
-} from "lucide-react";
+import { Clock, RotateCcw, Volume2, VolumeX, Award } from "lucide-react";
 import TestStats from "@/components/test-stats";
 import { useAudio } from "@/hooks/use-audio";
 import { useTypingTest } from "@/hooks/use-typing-test";
 import { renderText } from "@/components/render-text";
 import { TEST_DURATIONS, THEMES } from "@/lib/constants";
-import { getWPMGrade } from "@/lib/get-wpm-grade";
-import { TextDifficulty, ThemeOption, KeyboardLayout } from "@/lib/types";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { format } from "date-fns";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { TextDifficulty, ThemeOption } from "@/lib/types";
 import Confetti from "react-confetti";
+import SettingsPanel from "./settings-panel";
+import HistoryPanel from "./history-panel";
 
 export default function TypingTest() {
   const {
@@ -70,12 +47,7 @@ export default function TypingTest() {
     showConfetti,
     difficulty,
     theme,
-    showHistory,
-    showSettings,
-    history,
     focusMode,
-    keyboardLayout,
-    instantFeedback,
     isNewRecord,
     calculateWPM,
     calculateAccuracy,
@@ -85,17 +57,8 @@ export default function TypingTest() {
     changeDuration,
     toggleSound,
     changeDifficulty,
-    deleteHistoryItem,
-    clearHistory,
-    resetPersonalBest,
-    setTheme,
+
     setShowConfetti,
-    setShowHistory,
-    setShowSettings,
-    setSoundEnabled,
-    setFocusMode,
-    setInstantFeedback,
-    setKeyboardLayout,
   } = useTypingTest();
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -177,218 +140,9 @@ export default function TypingTest() {
             </div>
 
             <div className="flex gap-2">
-              <Sheet open={showSettings} onOpenChange={setShowSettings}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <Settings className="h-4 w-4" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent>
-                  <SheetHeader>
-                    <SheetTitle>Settings</SheetTitle>
-                    <SheetDescription>
-                      Customize your typing test experience
-                    </SheetDescription>
-                  </SheetHeader>
-                  <div className="py-4 space-y-6">
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-medium">Appearance</h3>
-                      <div className="grid grid-cols-2 gap-2">
-                        {(Object.keys(THEMES) as ThemeOption[]).map(
-                          (themeOption) => (
-                            <Button
-                              key={themeOption}
-                              variant={
-                                theme === themeOption ? "default" : "outline"
-                              }
-                              className="justify-start"
-                              onClick={() => setTheme(themeOption)}>
-                              {themeOption.charAt(0).toUpperCase() +
-                                themeOption.slice(1)}
-                            </Button>
-                          )
-                        )}
-                      </div>
-                    </div>
+              <SettingsPanel />
 
-                    <Separator />
-
-                    <div className="space-y-3">
-                      <h3 className="text-sm font-medium">Test Options</h3>
-
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="sound">Sound Effects</Label>
-                        <Switch
-                          id="sound"
-                          checked={soundEnabled}
-                          onCheckedChange={setSoundEnabled}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="focus">Focus Mode</Label>
-                        <Switch
-                          id="focus"
-                          checked={focusMode}
-                          onCheckedChange={setFocusMode}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="feedback">Instant Feedback</Label>
-                        <Switch
-                          id="feedback"
-                          checked={instantFeedback}
-                          onCheckedChange={setInstantFeedback}
-                        />
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div className="space-y-3">
-                      <h3 className="text-sm font-medium">Keyboard Layout</h3>
-                      <Select
-                        value={keyboardLayout}
-                        onValueChange={(value) =>
-                          setKeyboardLayout(value as KeyboardLayout)
-                        }>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select layout" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="standard">QWERTY</SelectItem>
-                          <SelectItem value="dvorak">Dvorak</SelectItem>
-                          <SelectItem value="colemak">Colemak</SelectItem>
-                          <SelectItem value="workman">Workman</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <Separator />
-
-                    <div className="space-y-3">
-                      <h3 className="text-sm font-medium">Reset Data</h3>
-                      <div className="flex flex-col gap-2">
-                        <Button
-                          variant="destructive"
-                          onClick={resetPersonalBest}
-                          className="justify-start">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Reset Personal Best
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={clearHistory}
-                          className="justify-start">
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Clear History
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                  <SheetClose asChild>
-                    <Button className="mt-4">Close Settings</Button>
-                  </SheetClose>
-                </SheetContent>
-              </Sheet>
-
-              <Sheet open={showHistory} onOpenChange={setShowHistory}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="icon">
-                    <History className="h-4 w-4" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent>
-                  <SheetHeader>
-                    <SheetTitle>Test History</SheetTitle>
-                    <SheetDescription>
-                      View your previous typing test results
-                    </SheetDescription>
-                  </SheetHeader>
-
-                  {history.length > 0 ? (
-                    <ScrollArea className="h-[70vh] pr-4 my-4">
-                      <div className="space-y-4">
-                        {history.map((entry) => (
-                          <Card key={entry.id} className="relative">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="absolute top-2 right-2 h-6 w-6"
-                              onClick={() => deleteHistoryItem(entry.id)}>
-                              <X className="h-4 w-4" />
-                            </Button>
-                            <CardContent className="pt-6">
-                              <div className="grid grid-cols-2 gap-y-4">
-                                <div>
-                                  <p className="text-sm text-muted-foreground">
-                                    Date
-                                  </p>
-                                  <p className="font-medium">
-                                    {format(
-                                      new Date(entry.date),
-                                      "MMM d, yyyy"
-                                    )}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-muted-foreground">
-                                    Time
-                                  </p>
-                                  <p className="font-medium">
-                                    {format(new Date(entry.date), "h:mm a")}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-muted-foreground">
-                                    WPM
-                                  </p>
-                                  <p className="font-medium text-lg">
-                                    {entry.wpm}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-muted-foreground">
-                                    Level
-                                  </p>
-                                  <p className="font-medium">
-                                    {getWPMGrade(entry.wpm)}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-muted-foreground">
-                                    Accuracy
-                                  </p>
-                                  <p className="font-medium">
-                                    {entry.accuracy}%
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-sm text-muted-foreground">
-                                    Duration
-                                  </p>
-                                  <p className="font-medium">
-                                    {entry.duration}s
-                                  </p>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-40">
-                      <History className="h-10 w-10 text-muted-foreground mb-2" />
-                      <p className="text-muted-foreground">No history yet</p>
-                      <p className="text-sm text-muted-foreground">
-                        Complete your first test to see results here
-                      </p>
-                    </div>
-                  )}
-                </SheetContent>
-              </Sheet>
+              <HistoryPanel />
 
               <Button
                 variant="outline"
