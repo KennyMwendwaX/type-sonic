@@ -12,11 +12,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { X, History } from "lucide-react";
 import { format } from "date-fns";
 import { getWPMGrade } from "@/lib/get-wpm-grade";
-import { useTypingTest } from "@/hooks/use-typing-test";
+import { useTypingTestStore } from "@/store/useTypingTestStore";
 
 export default function HistoryPanel() {
   const { showHistory, history, deleteHistoryItem, setShowHistory } =
-    useTypingTest();
+    useTypingTestStore();
   return (
     <Sheet open={showHistory} onOpenChange={setShowHistory}>
       <SheetTrigger asChild>

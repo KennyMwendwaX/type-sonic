@@ -21,7 +21,7 @@ import { Separator } from "@/components/ui/separator";
 import { Settings, Trash2 } from "lucide-react";
 import { THEMES } from "@/lib/constants";
 import { ThemeOption, KeyboardLayout } from "@/lib/types";
-import { useTypingTest } from "@/hooks/use-typing-test";
+import { useTypingTestStore } from "@/store/useTypingTestStore";
 
 export default function SettingsPanel() {
   const {
@@ -35,11 +35,11 @@ export default function SettingsPanel() {
     resetPersonalBest,
     setTheme,
     setShowSettings,
-    setSoundEnabled,
+    toggleSound,
     setFocusMode,
     setInstantFeedback,
     setKeyboardLayout,
-  } = useTypingTest();
+  } = useTypingTestStore();
   return (
     <Sheet open={showSettings} onOpenChange={setShowSettings}>
       <SheetTrigger asChild>
@@ -80,7 +80,7 @@ export default function SettingsPanel() {
               <Switch
                 id="sound"
                 checked={soundEnabled}
-                onCheckedChange={setSoundEnabled}
+                onCheckedChange={toggleSound}
               />
             </div>
 
