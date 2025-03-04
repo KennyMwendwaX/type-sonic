@@ -25,7 +25,7 @@ import {
 import { format } from "date-fns";
 import { getWPMGrade } from "@/lib/get-wpm-grade";
 import { useTypingTestStore } from "@/store/useTypingTestStore";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Progress } from "./ui/progress";
 
