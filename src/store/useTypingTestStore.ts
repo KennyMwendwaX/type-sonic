@@ -121,6 +121,17 @@ export const useTypingTestStore = create<TypingTestState & TypingTestActions>()(
           showConfetti: false,
           isNewRecord: false,
         });
+
+        // Start the timer
+        const timer = setInterval(() => {
+          const currentTimeLeft = get().timeLeft;
+          if (currentTimeLeft > 0 && get().testActive) {
+            set({ timeLeft: currentTimeLeft - 1 });
+          } else {
+            clearInterval(timer);
+            get().endTest();
+          }
+        }, 1000);
       },
 
       endTest: () => {
