@@ -1,5 +1,3 @@
-"use client";
-
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
@@ -8,6 +6,23 @@ import {
   TextDifficulty,
   KeyboardLayout,
 } from "@/lib/types";
+import {
+  getNewText,
+  checkTestCompletion,
+  updateErrorsAndWords,
+} from "@/lib/text-helpers";
+import {
+  calculateAccuracy,
+  calculateCPM,
+  calculateWPM,
+  getAverageWPM,
+  getImprovementPercentage,
+} from "@/lib/calculations";
+import {
+  loadLocalStorageItem,
+  saveLocalStorageItem,
+  clearLocalStorageItem,
+} from "@/lib/local-storage";
 
 type TypingTestState = {
   text: string;
@@ -40,6 +55,9 @@ type TypingTestActions = {
   startTest: () => void;
   endTest: () => void;
   handleInputChange: (value: string) => void;
+  calculateWPM: () => number;
+  calculateAccuracy: () => number;
+  calculateCPM: () => number;
   changeDuration: (newDuration: number) => void;
   toggleSound: () => void;
   changeDifficulty: (newDifficulty: TextDifficulty) => void;
@@ -52,6 +70,10 @@ type TypingTestActions = {
   setFocusMode: (focusMode: boolean) => void;
   setKeyboardLayout: (layout: KeyboardLayout) => void;
   setInstantFeedback: (feedback: boolean) => void;
+  getAverageWPM: () => number;
+  getImprovementPercentage: () => number;
+  addToHistory: (wpm: number, accuracy: number) => void;
+  getHistory: () => HistoryEntry[];
 };
 
 export const useTypingTestStore = create<TypingTestState & TypingTestActions>()(
@@ -83,7 +105,9 @@ export const useTypingTestStore = create<TypingTestState & TypingTestActions>()(
       isNewRecord: false,
 
       startTest: () => {
+        const newText = getNewText(get().difficulty);
         set({
+          text: newText,
           userInput: "",
           currentIndex: 0,
           errors: 0,
@@ -100,35 +124,156 @@ export const useTypingTestStore = create<TypingTestState & TypingTestActions>()(
 
       endTest: () => {
         if (!get().testActive) return;
-        set({
-          endTime: Date.now(),
-          testActive: false,
-          testComplete: true,
+
+        const finalWPM = get().calculateWPM();
+        const finalAccuracy = get().calculateAccuracy();
+
+        set((state) => {
+          // Update personal best
+          const newPersonalBest =
+            !state.personalBest || finalWPM > state.personalBest
+              ? finalWPM
+              : state.personalBest;
+
+          const newStreak =
+            newPersonalBest > (state.personalBest || 0) ? state.streak + 1 : 0;
+
+          // Save personal best to local storage if improved
+          if (newPersonalBest > (state.personalBest || 0)) {
+            saveLocalStorageItem("personal-best", newPersonalBest);
+          }
+
+          return {
+            endTime: Date.now(),
+            testActive: false,
+            testComplete: true,
+            personalBest: newPersonalBest,
+            streak: newStreak,
+            isNewRecord: newPersonalBest > (state.personalBest || 0),
+            showConfetti: finalWPM > (state.personalBest || 0),
+          };
         });
+
+        // Add test result to history
+        get().addToHistory(finalWPM, finalAccuracy);
+      },
+
+      addToHistory: (wpm: number, accuracy: number) => {
+        const newEntry: HistoryEntry = {
+          id: Date.now().toString(),
+          date: new Date(),
+          wpm,
+          accuracy,
+          duration: get().duration,
+          textLength: get().text.length,
+          difficulty: get().difficulty,
+        };
+
+        set((state) => {
+          const updatedHistory = [...state.history, newEntry];
+          saveLocalStorageItem("typing-history", updatedHistory);
+          return { history: updatedHistory };
+        });
+      },
+
+      getHistory: () => {
+        const savedHistory = loadLocalStorageItem<HistoryEntry[]>(
+          "typing-history",
+          []
+        );
+        set({ history: savedHistory });
+        return savedHistory;
+      },
+      deleteHistoryItem: (id) =>
+        set((state) => {
+          const updatedHistory = state.history.filter((item) => item.id !== id);
+          saveLocalStorageItem("typing-history", updatedHistory);
+          return { history: updatedHistory };
+        }),
+
+      clearHistory: () => {
+        set({ history: [] });
+        clearLocalStorageItem("typing-history");
       },
 
       handleInputChange: (value) => {
         if (!get().testActive || get().testComplete) return;
-        set({ userInput: value, currentIndex: value.length });
+
+        const { errors, wordsTyped } = updateErrorsAndWords(value, get().text);
+        const isComplete = checkTestCompletion(value, get().text);
+
+        set({
+          userInput: value,
+          currentIndex: value.length,
+          errors,
+          wordsTyped,
+          ...(isComplete && {
+            testActive: false,
+            testComplete: true,
+            showConfetti: true,
+          }),
+        });
       },
+
+      calculateWPM: () =>
+        calculateWPM(
+          get().startTime,
+          get().endTime,
+          get().wordsTyped,
+          get().testComplete
+        ),
+
+      calculateAccuracy: () => calculateAccuracy(get().userInput, get().errors),
+
+      calculateCPM: () =>
+        calculateCPM(
+          get().startTime,
+          get().endTime,
+          get().userInput.length,
+          get().testComplete
+        ),
 
       changeDuration: (newDuration) =>
         set({ duration: newDuration, timeLeft: newDuration }),
+
       toggleSound: () =>
         set((state) => ({ soundEnabled: !state.soundEnabled })),
+
       changeDifficulty: (newDifficulty) => set({ difficulty: newDifficulty }),
-      deleteHistoryItem: (id) =>
-        set((state) => ({
-          history: state.history.filter((item) => item.id !== id),
-        })),
-      clearHistory: () => set({ history: [] }),
-      resetPersonalBest: () => set({ personalBest: null }),
-      setTheme: (theme) => set({ theme }),
+
+      resetPersonalBest: () => {
+        set({ personalBest: null });
+        clearLocalStorageItem("personal-best");
+      },
+
+      getAverageWPM: () => getAverageWPM(get().history),
+
+      getImprovementPercentage: () =>
+        getImprovementPercentage(get().personalBest, get().history),
+
+      setTheme: (theme) => {
+        set({ theme });
+        saveLocalStorageItem("theme", theme);
+      },
+
       setShowHistory: (show) => set({ showHistory: show }),
+
       setShowSettings: (show) => set({ showSettings: show }),
-      setFocusMode: (focusMode) => set({ focusMode }),
-      setKeyboardLayout: (layout) => set({ keyboardLayout: layout }),
-      setInstantFeedback: (feedback) => set({ instantFeedback: feedback }),
+
+      setFocusMode: (focusMode) => {
+        set({ focusMode });
+        saveLocalStorageItem("focus-mode", focusMode);
+      },
+
+      setKeyboardLayout: (layout) => {
+        set({ keyboardLayout: layout });
+        saveLocalStorageItem("keyboard-layout", layout);
+      },
+
+      setInstantFeedback: (feedback) => {
+        set({ instantFeedback: feedback });
+        saveLocalStorageItem("instant-feedback", feedback);
+      },
     }),
     {
       name: "typing-test-store",
