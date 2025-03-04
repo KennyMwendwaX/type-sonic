@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { CardFooter } from "@/components/ui/card";
-import { useTypingTest } from "@/hooks/use-typing-test";
+import { useTypingTestStore } from "@/store/useTypingTestStore";
 import { RotateCcw, Award } from "lucide-react";
 
 export default function TypingTestFooter() {
   const { testActive, testComplete, streak, startTest, endTest } =
-    useTypingTest();
+    useTypingTestStore();
 
   return (
     <CardFooter className="flex justify-between">

@@ -14,8 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useTypingTest } from "@/hooks/use-typing-test";
 import { useAudio } from "@/hooks/use-audio";
+import { useTypingTestStore } from "@/store/useTypingTestStore";
 
 export default function TypingTestContent() {
   const {
@@ -39,7 +39,7 @@ export default function TypingTestContent() {
     handleInputChange,
     changeDuration,
     changeDifficulty,
-  } = useTypingTest();
+  } = useTypingTestStore();
 
   const inputRef = useRef<HTMLInputElement>(null);
   const { playCorrectSound, playErrorSound } = useAudio();
@@ -164,7 +164,7 @@ export default function TypingTestContent() {
         ref={inputRef}
         type="text"
         value={userInput}
-        onChange={handleInputChange}
+        onChange={(e) => handleInputChange(e.target.value)}
         className="sr-only"
         autoComplete="off"
         autoCapitalize="off"

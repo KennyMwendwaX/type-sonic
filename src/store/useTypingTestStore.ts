@@ -67,6 +67,7 @@ type TypingTestActions = {
   setTheme: (theme: ThemeOption) => void;
   setShowHistory: (show: boolean) => void;
   setShowSettings: (show: boolean) => void;
+  setShowConfetti: (show: boolean) => void;
   setFocusMode: (focusMode: boolean) => void;
   setKeyboardLayout: (layout: KeyboardLayout) => void;
   setInstantFeedback: (feedback: boolean) => void;
@@ -259,6 +260,8 @@ export const useTypingTestStore = create<TypingTestState & TypingTestActions>()(
       setShowHistory: (show) => set({ showHistory: show }),
 
       setShowSettings: (show) => set({ showSettings: show }),
+
+      setShowConfetti: (show: boolean) => set({ showConfetti: show }),
 
       setFocusMode: (focusMode) => {
         set({ focusMode });

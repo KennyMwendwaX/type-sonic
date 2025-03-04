@@ -3,10 +3,11 @@ import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Volume2, VolumeX } from "lucide-react";
 import SettingsPanel from "./settings-panel";
 import HistoryPanel from "./history-panel";
-import { useTypingTest } from "@/hooks/use-typing-test";
+import { useTypingTestStore } from "@/store/useTypingTestStore";
 
 export default function TypingTestHeader() {
-  const { testActive, soundEnabled, focusMode, toggleSound } = useTypingTest();
+  const { testActive, soundEnabled, focusMode, toggleSound } =
+    useTypingTestStore();
 
   return (
     <CardHeader
