@@ -4,7 +4,7 @@ import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "🚀 TypeSonic - The Ultimate Typing Speed & Accuracy Test",
+  title: "🚀 TypeSonic - The Ultimate Typing Speed & Accuracy Application",
   description:
     "Boost your typing speed and accuracy with TypeSonic! Take fast-paced typing tests, track your progress, and challenge yourself with real-time stats. Improve your skills with precision typing exercises. Try it now!",
   keywords:

@@ -1,11 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import {
-  HistoryEntry,
-  ThemeOption,
-  TextDifficulty,
-  KeyboardLayout,
-} from "@/lib/types";
+import { HistoryEntry, TextDifficulty, KeyboardLayout } from "@/lib/types";
 import {
   getNewText,
   checkTestCompletion,
@@ -23,6 +18,7 @@ import {
   saveLocalStorageItem,
   clearLocalStorageItem,
 } from "@/lib/local-storage";
+import { ThemeOption } from "@/lib/constants";
 
 type TypingTestState = {
   text: string;

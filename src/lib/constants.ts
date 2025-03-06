@@ -1,12 +1,41 @@
 export const TEST_DURATIONS = [15, 30, 60, 120];
 
 export const THEMES = {
-  default: "bg-card border-border",
-  minimalist: "bg-white border-gray-200 dark:bg-black dark:border-gray-800",
-  cyberpunk:
-    "bg-gradient-to-br from-purple-900 to-blue-900 border-purple-600 text-cyan-400",
-  vintage:
-    "bg-amber-50 border-amber-200 dark:bg-amber-950 dark:border-amber-800 font-serif",
+  default:
+    "bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 border-gray-200 dark:border-gray-800 shadow-sm",
+
+  ultraViolet:
+    "bg-gradient-to-br from-violet-600 via-purple-500 to-fuchsia-500 text-gray-900 border-violet-400 shadow-lg",
+
+  cosmicBlue:
+    "bg-gradient-to-br from-blue-600 via-indigo-500 to-violet-500 text-gray-900 border-blue-400 shadow-lg border-2",
+
+  electricLime:
+    "bg-gradient-to-br from-lime-500 via-green-500 to-emerald-600 text-gray-900 border-lime-300 shadow-lg",
+
+  sunriseFire:
+    "bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 text-gray-900 border-yellow-300 shadow-lg",
+
+  tropicalPunch:
+    "bg-gradient-to-br from-pink-500 via-rose-500 to-orange-500 text-gray-900 border-pink-400 shadow-lg",
+
+  vaporwave:
+    "bg-gradient-to-br from-fuchsia-500 via-sky-400 to-cyan-300 text-fuchsia-900 border-fuchsia-300 shadow-lg",
+
+  oceanBreeze:
+    "bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-600 text-gray-900 border-cyan-300 shadow-lg border-2",
+
+  hotPink:
+    "bg-gradient-to-br from-pink-600 via-pink-500 to-rose-500 text-gray-900 border-pink-300 shadow-xl shadow-pink-200",
+
+  auroraGlow:
+    "bg-gradient-to-br from-teal-400 via-emerald-500 to-green-500 text-gray-900 border-teal-300 shadow-xl shadow-green-200/50",
+
+  magmaFlow:
+    "bg-gradient-to-br from-red-600 via-orange-500 to-amber-500 text-gray-900 border-red-400 shadow-xl shadow-red-200/50",
+
+  glacierMint:
+    "bg-gradient-to-br from-blue-400 via-cyan-300 to-emerald-400 text-blue-900 border-cyan-300 shadow-lg shadow-cyan-200/50 border-2",
 };
 
 export type ThemeOption = keyof typeof THEMES;

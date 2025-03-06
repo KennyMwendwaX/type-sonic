@@ -29,8 +29,8 @@ import {
   Eye,
   Zap,
 } from "lucide-react";
-import { THEMES } from "@/lib/constants";
-import type { ThemeOption, KeyboardLayout } from "@/lib/types";
+import { ThemeOption, THEMES } from "@/lib/constants";
+import type { KeyboardLayout } from "@/lib/types";
 import { useTypingTestStore } from "@/store/useTypingTestStore";
 import { motion } from "motion/react";
 
@@ -82,7 +82,7 @@ export default function SettingsPanel() {
                     <Button
                       key={themeOption}
                       variant={theme === themeOption ? "default" : "outline"}
-                      className="justify-start"
+                      className={`justify-start ${THEMES[themeOption]}`}
                       onClick={() => setTheme(themeOption)}>
                       {themeOption.charAt(0).toUpperCase() +
                         themeOption.slice(1)}
