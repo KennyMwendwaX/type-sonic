@@ -2,8 +2,7 @@
 
 import { useRef } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { THEMES } from "@/lib/constants";
-import { ThemeOption } from "@/lib/types";
+import { ThemeOption, THEMES } from "@/lib/constants";
 import Confetti from "react-confetti";
 import TypingTestContent from "./typing-test-content";
 import TypingTestFooter from "./typing-test-footer";
