@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { HistoryEntry, TextDifficulty, KeyboardLayout } from "@/lib/types";
+import type { HistoryEntry, TextDifficulty, KeyboardLayout } from "@/lib/types";
 import {
   getNewText,
   checkTestCompletion,
@@ -18,7 +18,7 @@ import {
   saveLocalStorageItem,
   clearLocalStorageItem,
 } from "@/lib/local-storage";
-import { ThemeOption } from "@/lib/constants";
+import type { ThemeOption } from "@/lib/constants";
 
 type TypingTestState = {
   text: string;
@@ -45,6 +45,7 @@ type TypingTestState = {
   keyboardLayout: KeyboardLayout;
   instantFeedback: boolean;
   isNewRecord: boolean;
+  fullscreenMode: boolean;
 };
 
 type TypingTestActions = {
@@ -71,6 +72,8 @@ type TypingTestActions = {
   getImprovementPercentage: () => number;
   addToHistory: (wpm: number, accuracy: number) => void;
   getHistory: () => HistoryEntry[];
+  setFullscreenMode: (fullscreen: boolean) => void;
+  toggleFullscreenMode: () => void;
 };
 
 export const useTypingTestStore = create<TypingTestState & TypingTestActions>()(
@@ -100,6 +103,7 @@ export const useTypingTestStore = create<TypingTestState & TypingTestActions>()(
       keyboardLayout: "standard",
       instantFeedback: true,
       isNewRecord: false,
+      fullscreenMode: false,
 
       startTest: () => {
         const newText = getNewText(get().difficulty);
@@ -283,6 +287,17 @@ export const useTypingTestStore = create<TypingTestState & TypingTestActions>()(
       setInstantFeedback: (feedback) => {
         set({ instantFeedback: feedback });
         saveLocalStorageItem("instant-feedback", feedback);
+      },
+
+      setFullscreenMode: (fullscreen) => {
+        set({ fullscreenMode: fullscreen });
+        saveLocalStorageItem("fullscreen-mode", fullscreen);
+      },
+
+      toggleFullscreenMode: () => {
+        const newFullscreenMode = !get().fullscreenMode;
+        set({ fullscreenMode: newFullscreenMode });
+        saveLocalStorageItem("fullscreen-mode", newFullscreenMode);
       },
     }),
     {

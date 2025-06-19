@@ -33,6 +33,7 @@ import { ThemeOption, THEMES } from "@/lib/constants";
 import type { KeyboardLayout } from "@/lib/types";
 import { useTypingTestStore } from "@/store/useTypingTestStore";
 import { motion } from "motion/react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export default function SettingsPanel() {
   const {
@@ -59,7 +60,14 @@ export default function SettingsPanel() {
           variant="outline"
           size="icon"
           className="relative overflow-hidden group text-foreground">
-          <Settings className="h-4 w-4 transition-transform group-hover:scale-110" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="flex">
+                <Settings className="h-4 w-4 transition-transform group-hover:scale-110" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>Settings</TooltipContent>
+          </Tooltip>
           <span className="sr-only">Open settings</span>
         </Button>
       </SheetTrigger>

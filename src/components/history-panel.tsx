@@ -28,6 +28,7 @@ import { getWPMGrade } from "@/lib/get-wpm-grade";
 import { useTypingTestStore } from "@/store/useTypingTestStore";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export default function HistoryPanel() {
   const {
@@ -61,7 +62,14 @@ export default function HistoryPanel() {
           variant="outline"
           size="icon"
           className="relative overflow-hidden group text-foreground">
-          <History className="h-4 w-4 transition-transform group-hover:scale-110" />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="flex">
+                <History className="h-4 w-4 transition-transform group-hover:scale-110" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>History</TooltipContent>
+          </Tooltip>
           <span className="sr-only">View typing history</span>
         </Button>
       </SheetTrigger>
