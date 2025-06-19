@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import "./globals.css";
+import { ThemeProvider } from "@/providers/theme-provider";
 
 export const metadata: Metadata = {
   title: "🚀 TypeSonic - The Ultimate Typing Speed & Accuracy Application",
@@ -20,7 +21,9 @@ export default function RootLayout({
     <html lang="en">
       <body
         className={`${GeistSans.className} ${GeistMono.className} antialiased`}>
-        {children}
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

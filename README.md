@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TypeSonic: The Ultimate Typing Speed & Accuracy Test
 
-## Getting Started
+![TypeSonic Logo](public/typesonic-logo.png)
 
-First, run the development server:
+TypeSonic is a modern, feature-rich typing test application built with Next.js, React, and Tailwind CSS. It offers a fun and interactive way to measure and improve your typing speed and accuracy.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Real-time Typing Test**: Measure your Words Per Minute (WPM) and accuracy.
+- **Multiple Difficulty Levels**: Choose from easy, medium, hard, and code snippets.
+- **Customizable Test Duration**: Select from 15, 30, 60, or 120 seconds tests.
+- **Vibrant Themes**: 15+ beautiful themes to personalize your experience.
+- **Detailed Statistics**: Track your progress with comprehensive performance metrics.
+- **History Tracking**: View your past performances and improvements over time.
+- **Focus Mode**: Minimize distractions for a concentrated typing experience.
+- **Keyboard Layouts**: Support for QWERTY, Dvorak, Colemak, and Workman layouts.
+- **Sound Effects**: Optional audio feedback for keystrokes.
+- **Responsive Design**: Seamless experience across desktop and mobile devices.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ Technologies Used
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- [Next.js](https://nextjs.org/)
+- [React](https://reactjs.org/)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [Zustand](https://github.com/pmndrs/zustand)
+- [Lucide Icons](https://lucide.dev/)
+- [shadcn/ui](https://ui.shadcn.com/)
 
-## Learn More
+## 🚀 Getting Started
 
-To learn more about Next.js, take a look at the following resources:
+### Prerequisites
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Node.js (v20 or later)
+- npm or pnpm or yarn
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Installation
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Clone the repository:

@@ -9,7 +9,7 @@ export function useAudio() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       correctSoundRef.current = new Audio("/click.wav");
-      errorSoundRef.current = new Audio("/buzz.flac");
+      errorSoundRef.current = new Audio("/buzz.wav");
 
       // Preload sounds
       correctSoundRef.current.load();

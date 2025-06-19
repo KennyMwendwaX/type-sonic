@@ -52,7 +52,7 @@ export default function HistoryPanel() {
         <Button
           variant="outline"
           size="icon"
-          className="relative overflow-hidden group">
+          className="relative overflow-hidden group text-foreground">
           <History className="h-4 w-4 transition-transform group-hover:scale-110" />
           <span className="sr-only">View typing history</span>
         </Button>

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { CardHeader } from "@/components/ui/card";
 import { Volume2, VolumeX } from "lucide-react";
 import SettingsPanel from "./settings-panel";
 import HistoryPanel from "./history-panel";
@@ -15,8 +15,8 @@ export default function TypingTestHeader() {
         focusMode && testActive ? "sr-only" : ""
       }`}>
       <div>
-        <CardTitle>Speed Typing Test</CardTitle>
-        <CardDescription>Test your typing speed and accuracy</CardDescription>
+        <div className="text-2xl">Speed Typing Test</div>
+        <div className="text-md">Test your typing speed and accuracy</div>
       </div>
       <div className="flex gap-2">
         <SettingsPanel />
@@ -26,6 +26,7 @@ export default function TypingTestHeader() {
           variant="outline"
           size="icon"
           onClick={toggleSound}
+          className="text-foreground"
           aria-label={soundEnabled ? "Disable sound" : "Enable sound"}>
           {soundEnabled ? (
             <Volume2 className="h-4 w-4" />

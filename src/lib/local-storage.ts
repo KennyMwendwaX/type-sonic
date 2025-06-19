@@ -17,5 +17,9 @@ export const loadLocalStorageItem = <T>(key: string, defaultValue: T): T => {
 };
 
 export const clearLocalStorageItem = (key: string): void => {
-  localStorage.removeItem(key);
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.error(`Failed to clear ${key}:`, error);
+  }
 };
