@@ -48,7 +48,8 @@ export default function TypingTest() {
       {/* Fullscreen Mode */}
       {fullscreenMode && (
         <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-xl flex items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="w-full max-w-7xl max-h-[95vh] overflow-auto animate-in zoom-in-95 duration-300">
+          <div className="w-full max-w-7xl max-h-[95vh] overflow-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden animate-in zoom-in-95 duration-300">
+            {" "}
             <TooltipProvider>
               <Card className={`${cardClasses} shadow-2xl border-primary/20`}>
                 <TypingTestHeader />

@@ -51,7 +51,7 @@ export default function Home() {
         </div>
       </nav>
 
-      <main className="container mx-auto px-4 py-12 max-w-7xl">
+      <main className="container mx-auto px-12 py-12 max-w-7xl">
         {/* Hero Section */}
         <section className="text-center mb-16 space-y-8">
           <div className="space-y-6">
